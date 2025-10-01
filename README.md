@@ -20,7 +20,7 @@ This project implements a deep learning pipeline for pathological image analysis
 - **Multi-resolution Support**: Adaptive grid sizing based on objective magnification (20x/40x)
 - **Ink Artifact Removal**: Semi-automated preprocessing for marker pen removal
 
-<img width="416" height="99" alt="image" src="https://github.com/user-attachments/assets/f14d424d-6295-48b4-ab85-e9b98139df9d" />
+
 
 ### 🧠 Advanced Deep Learning Architecture
 - **Transformer Encoder**: Multi-head attention mechanism for patch-level feature aggregation
@@ -33,7 +33,7 @@ This project implements a deep learning pipeline for pathological image analysis
 - **C-index Optimization**: Concordance index as primary evaluation metric
 - **Cross-validation**: 10-fold stratified cross-validation for model validation
 
-<img width="600" height="400" alt="survival_analysis_workflow" src="https://github.com/user-attachments/assets/f14d424d-6295-48b4-ab85-e9b98139df9d" />
+<img width="1200" height="800" alt="image" src="https://github.com/user-attachments/assets/f14d424d-6295-48b4-ab85-e9b98139df9d" />
 *Figure 1: Survival analysis workflow and model performance*
 
 
