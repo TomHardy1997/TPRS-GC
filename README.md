@@ -19,6 +19,7 @@ This project implements a deep learning pipeline for pathological image analysis
 - **Automated Grid Generation**: Systematic patch extraction within selected regions
 - **Multi-resolution Support**: Adaptive grid sizing based on objective magnification (20x/40x)
 - **Ink Artifact Removal**: Semi-automated preprocessing for marker pen removal
+
 <img width="416" height="99" alt="image" src="https://github.com/user-attachments/assets/f14d424d-6295-48b4-ab85-e9b98139df9d" />
 
 ### 🧠 Advanced Deep Learning Architecture
@@ -30,14 +31,12 @@ This project implements a deep learning pipeline for pathological image analysis
 ### 📊 Robust Survival Analysis
 - **Combined Loss Function**: NLL survival loss + pairwise ranking loss
 - **C-index Optimization**: Concordance index as primary evaluation metric
-- **Censorship Handling**: Proper treatment of censored survival data
 - **Cross-validation**: 10-fold stratified cross-validation for model validation
 
-### ⚙️ Automated Optimization
-- **Hyperparameter Tuning**: Optuna-based Bayesian optimization
-- **Multi-objective Optimization**: Balance between model complexity and performance
-- **Experiment Tracking**: Integration with Weights & Biases (wandb)
-- **Reproducible Results**: Comprehensive seed setting and logging
+<img width="600" height="400" alt="survival_analysis_workflow" src="https://github.com/user-attachments/assets/f14d424d-6295-48b4-ab85-e9b98139df9d" />
+*Figure 1: Survival analysis workflow and model performance*
+
+
 
 ## Installation
 
