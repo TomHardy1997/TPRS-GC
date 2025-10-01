@@ -28,7 +28,7 @@ conda activate TPRS
 
 # Install dependencies
 pip install -r requirements.txt
-‘’‘
+‘’‘bash
 Basic Usage
 复制
 # 1. Interactive WSI annotation
