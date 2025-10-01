@@ -1,0 +1,75 @@
+# Core ML/DL frameworks
+torch==2.5.1
+torchvision==0.20.1
+torchaudio==0.10.0
+numpy==1.26.4
+einops==0.8.0
+
+# Data handling and analysis
+pandas==2.2.3
+h5py==3.10.0
+scikit-learn==1.4.2
+scikit-survival==0.22.2
+lifelines==0.30.0
+scipy==1.13.1
+
+# Computer Vision & WSI Processing
+opencv-python-headless==4.11.0.86
+Pillow==11.0.0
+histolab==0.7.0
+openslide-python==1.4.1
+tiatoolbox==1.6.0
+staintools==2.1.2
+scikit-image==0.24.0
+imageio==2.35.1
+tifffile==2024.8.30
+
+# Medical imaging
+pydicom==2.4.4
+simpleitk==2.4.0
+dicomweb-client==0.59.3
+wsidicom==0.20.6
+
+# Hyperparameter optimization & Experiment tracking
+optuna==4.0.0
+wandb
+
+# Visualization
+matplotlib==3.9.3
+seaborn==0.13.2
+bokeh==3.4.3
+
+# Jupyter ecosystem
+jupyter==1.1.1
+jupyterlab==4.3.2
+ipykernel==6.29.5
+notebook==7.4.5
+
+# Utilities
+tqdm==4.67.1
+pyyaml==6.0.2
+requests==2.32.3
+flask==3.1.0
+flask-cors==5.0.0
+
+# Image augmentation
+albumentations==1.4.21
+
+# Additional scientific computing
+numba==0.60.0
+sympy==1.13.1
+networkx==3.2.1
+zarr==2.18.2
+numcodecs==0.12.1
+
+# Dimensionality reduction
+umap-learn==0.5.7
+pynndescent==0.5.13
+
+# Optimization
+osqp==0.6.5
+ecos==2.0.13
+
+# GPU monitoring
+gpustat==1.1.1
+nvidia-ml-py==12.535.133
