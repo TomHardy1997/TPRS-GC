@@ -32,7 +32,6 @@ This project implements a deep learning pipeline for pathological image analysis
 - **Cross-validation**: 10-fold stratified cross-validation for model validation
 
 <img width="4000" height="945" alt="buchong1" src="https://github.com/user-attachments/assets/8c49d095-a3c8-4ced-b95a-10ea481aaa5f" />
-*Figure 1: Survival analysis workflow and model performance*
 
 
 
@@ -49,20 +48,20 @@ This project implements a deep learning pipeline for pathological image analysis
 #### Option 1: Using the provided environment file (Recommended)
 
     # Clone the repository
-    git clone https://github.com/yourusername/WSI-Transformer.git
-    cd WSI-Transformer
+    git clone https://github.com/TPRS-GC/TPRS-GC.git
+    cd TPRS-GC
 
     # Create environment from the provided file
-    conda create --name clam --file environment.txt
+    conda create --name TPRS --file environment.txt
 
     # Activate the environment
-    conda activate clam
+    conda activate TPRS
 
 #### Option 2: Manual installation
 
     # Create new conda environment
     conda create -n wsi-transformer python=3.9
-    conda activate wsi-transformer
+    conda activate TPRS
 
     # Install CUDA toolkit
     conda install cudatoolkit=11.3.1 -c conda-forge
@@ -73,34 +72,13 @@ This project implements a deep learning pipeline for pathological image analysis
     # Install core dependencies
     pip install -r requirements.txt
 
-### System Dependencies (Linux)
-
-    # Ubuntu/Debian
-    sudo apt-get update
-    sudo apt-get install -y \
-        openslide-tools \
-        libopencv-dev \
-        libhdf5-dev \
-        libjpeg-dev \
-        libpng-dev \
-        libtiff-dev \
-        libwebp-dev
-
-    # CentOS/RHEL
-    sudo yum install -y \
-        openslide-devel \
-        opencv-devel \
-        hdf5-devel \
-        libjpeg-turbo-devel \
-        libpng-devel \
-        libtiff-devel
 
 ## Quick Start
 
 ### 1. Environment Verification
 
     # Activate environment
-    conda activate clam
+    conda activate TPRS
 
     # Verify key installations
     python -c "import torch; print(f'PyTorch: {torch.__version__}, CUDA: {torch.cuda.is_available()}')"
