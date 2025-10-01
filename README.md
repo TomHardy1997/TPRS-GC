@@ -19,6 +19,7 @@ This project implements a deep learning pipeline for pathological image analysis
 - **Automated Grid Generation**: Systematic patch extraction within selected regions
 - **Multi-resolution Support**: Adaptive grid sizing based on objective magnification (20x/40x)
 - **Ink Artifact Removal**: Semi-automated preprocessing for marker pen removal
+[buchong1.pdf](https://github.com/user-attachments/files/22636101/buchong1.pdf)
 
 
 
@@ -33,7 +34,7 @@ This project implements a deep learning pipeline for pathological image analysis
 - **C-index Optimization**: Concordance index as primary evaluation metric
 - **Cross-validation**: 10-fold stratified cross-validation for model validation
 
-<img width="1200" height="800" alt="image" src="https://github.com/user-attachments/assets/f14d424d-6295-48b4-ab85-e9b98139df9d" />
+[buchong1.pdf](https://github.com/user-attachments/files/22636101/buchong1.pdf)
 *Figure 1: Survival analysis workflow and model performance*
 
 
