@@ -1,6 +1,3 @@
-抱歉，我理解你的意思了。你需要整个文档都在一个markdown代码块里，包括所有的bash命令。这是完整的markdown文档：
-
-```markdown
 # WSI-Transformer: Whole Slide Image Analysis for Survival Prediction
 
 A comprehensive framework for survival analysis on Whole Slide Images (WSI) using Transformer architecture with interactive region selection and automated hyperparameter optimization.
