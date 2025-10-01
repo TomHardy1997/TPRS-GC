@@ -1,13 +1,14 @@
-# WSI-Transformer: Whole Slide Image Analysis for Survival Prediction
+# TPRS: Transformer-based biomarker from whole-slide images for prognostication in gastric cancer
 
-A comprehensive framework for survival analysis on Whole Slide Images (WSI) using Transformer architecture with interactive region selection and automated hyperparameter optimization.
+A Comprehensive Framework for Survival Analysis on Whole Slide Images (WSI) Using Transformer Architecture
 
 ## Overview
 
 This project implements a deep learning pipeline for pathological image analysis, specifically designed for survival prediction tasks. The framework combines:
 
-- **Interactive WSI Grid Selection**: Semi-automated tool for region-of-interest selection with polygon-based annotation
+- **Interactive WSI Grid Selection**: Semi-automated tool for region-of-interest selection with polygon-based annotation targeting marker pen annotated areas
 - **Transformer-based Architecture**: Advanced attention mechanism for feature aggregation from histopathological patches
+- **Multi-Patient Batch Processing**: Single batch can handle multiple patients with variable numbers of slides per patient
 - **Combined Survival Loss**: Integration of negative log-likelihood and ranking loss for robust survival analysis
 - **Automated Hyperparameter Optimization**: Optuna-based parameter tuning with cross-validation
 
@@ -18,6 +19,7 @@ This project implements a deep learning pipeline for pathological image analysis
 - **Automated Grid Generation**: Systematic patch extraction within selected regions
 - **Multi-resolution Support**: Adaptive grid sizing based on objective magnification (20x/40x)
 - **Ink Artifact Removal**: Semi-automated preprocessing for marker pen removal
+<img width="416" height="99" alt="image" src="https://github.com/user-attachments/assets/f14d424d-6295-48b4-ab85-e9b98139df9d" />
 
 ### 🧠 Advanced Deep Learning Architecture
 - **Transformer Encoder**: Multi-head attention mechanism for patch-level feature aggregation
