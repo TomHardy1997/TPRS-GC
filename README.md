@@ -31,12 +31,14 @@ pip install -r requirements.txt
 ## 📊 Data Preprocessing Pipeline
 
 ### Step 1: WSI Preprocessing
+
 For WSI segmentation and patching, we employed the preprocessing pipeline from the [CLAM repository](https://github.com/mahmoodlab/CLAM).
 
 To reproduce our patching step, use the `create_patches_fp.py` script with the following arguments:
 
 ```bash
 python create_patches_fp.py --source "raw_slides/" --save_dir "patches/" --patch_size 256 --step_size 256 --seg --patch --stitch
+
 
 
 ### Step 2: Ink Removal (Optional - for marker-annotated slides)
