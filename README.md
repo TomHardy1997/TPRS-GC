@@ -1,21 +1,25 @@
- # TPRS: Transformer-based Prognostic Risk Stratification for Gastric Cancer
+# TPRS: Transformer-based Prognostic Risk Stratification for Gastric Cancer
 
-A streamlined deep learning framework for survival prediction from whole-slide images using transformer architecture.
-
-## 🎯 Overview
-
-TPRS is a comprehensive pathological image analysis pipeline that combines:
-
-- **Interactive WSI Annotation**: Semi-automated region selection with polygon-based annotation
-- **Transformer Architecture**: Multi-head attention for histopathological patch aggregation  
-- **Survival Analysis**: Combined negative log-likelihood and ranking loss
-- **Interpretability**: CLAM-based heatmap generation with cellular feature extraction
+TPRS is a transformer-based survival prediction framework for whole-slide images (WSI).  
+It supports an end-to-end workflow from **WSI preprocessing → patch feature extraction (UNI/CONCH) → patient-level survival modeling**.
 
 ![TPRS Framework](https://github.com/user-attachments/assets/8c49d095-a3c8-4ced-b95a-10ea481aaa5f)
 
-## 🚀 Quick Start
+---
 
-### Installation
+## 🧭 Overview
+
+This repository includes:
+
+- **WSI preprocessing (CLAM pipeline)**: tissue segmentation, patching, optional stitching visualization
+- **Interactive region selection (optional)**: polygon-based inclusion/exclusion and coordinate export
+- **Patch feature extraction**: CLAM `extract_features_fp.py` with **UNI / CONCH / ResNet**
+- **Survival modeling**: Transformer aggregation + combined survival loss (NLL + ranking)
+- **Training & evaluation**: cross-validation + test + external test, C-index reporting, W&B logging
+
+---
+
+## ⚙️ Installation
 
 ### Step 1: Clone repository
 
@@ -41,139 +45,248 @@ or venv:
 
     pip install -r requirements.txt
 
-## 📊 Data Preprocessing Pipeline
+Notes:
+- For GPU training, install a CUDA-compatible PyTorch build.
+- Training uses `wandb`. Login once:
 
-## Step 1: WSI Preprocessing (Segmentation + Patching)
+      wandb login
 
-We use the preprocessing pipeline from the CLAM repository for **tissue segmentation**, **patch coordinate generation**, and optional **stitching visualization**.
+---
 
-This step is implemented by `create_patches_fp.py` (see source code). It will create three subfolders under `--save_dir`:
-- `patches/`  → patch coordinate `.h5` files (one per slide)
-- `masks/`    → tissue segmentation mask previews (`.jpg`)
-- `stitches/` → stitched patch-grid previews (`.jpg`, if enabled)
+## 📁 Project Inputs / Outputs
 
-### Run
+This repo typically interacts with three types of files:
 
-Example (seg + patch + stitch):
+1. **Raw WSI slides**: e.g. `.svs`
+2. **Patch coordinates**: `.h5` produced by CLAM patching or interactive grid tool
+3. **Patch features**:
+   - `.pt` (tensor only; recommended for training)
+   - `.h5` (features + coords; optional)
+
+A suggested structure:
+
+    data/
+      ├── raw_slides/                 # *.svs
+      ├── patches/                    # created by Step 1 (CLAM patching)
+      │   ├── patches/                # <SLIDE_ID>.h5  (coords + metadata)
+      │   ├── masks/                  # <SLIDE_ID>.jpg
+      │   └── stitches/               # <SLIDE_ID>.jpg (optional)
+      └── features/
+          ├── pt_files/               # <SLIDE_ID>.pt  (tensor, shape: N x D)
+          └── h5_files/               # <SLIDE_ID>.h5  (datasets: features, coords)
+
+---
+
+## 🧪 Data Preprocessing Pipeline (WSI → Patches → Features)
+
+This section reproduces the feature extraction pipeline used before survival training.
+
+---
+
+### Step 1: WSI Preprocessing (Segmentation + Patching)
+
+We use CLAM’s preprocessing pipeline for **tissue segmentation**, **patch coordinate generation**, and optional **stitching**.
+
+Run (seg + patch + stitch):
 
     python create_patches_fp.py \
-        --source "raw_slides/" \
-        --save_dir "patches/" \
+        --source "data/raw_slides/" \
+        --save_dir "data/patches/" \
         --patch_size 256 \
         --step_size 256 \
         --seg \
         --patch \
         --stitch
 
-### Notes (based on the script behavior)
+Outputs under `data/patches/`:
+- `patches/`  → `<SLIDE_ID>.h5`
+- `masks/`    → tissue mask preview images
+- `stitches/` → stitched grid preview images (if enabled)
+
+Notes:
 - The script writes/updates:
 
-      patches/process_list_autogen.csv
+      data/patches/process_list_autogen.csv
 
-  during processing (used for tracking slide-level parameters/status).
-- Auto-skip is enabled by default: if `patches/patches/<SLIDE_ID>.h5` already exists, that slide is skipped.
-  To disable skipping, use:
+- Auto-skip is enabled by default: if `data/patches/patches/<SLIDE_ID>.h5` exists, the slide is skipped.
+  Disable skipping with:
 
       --no_auto_skip
-- `--patch_level` defaults to `0` (level-0). You can change it if needed.
 
 ---
 
-## Step 2: Grid Selection & Patch Coordinate Export (Interactive)
+### Step 2 (Optional): Interactive Grid Selection & Coordinate Export
 
-This step provides an interactive workflow to select regions on a WSI thumbnail and generate a **grid of patch coordinates** on the **level-0 coordinate system**. Draw **GREEN inclusion polygons** to indicate where to sample patches, and optionally draw **BLUE exclusion polygons** to remove unwanted areas (e.g., artifacts) from the sampled grid. The tool exports **Trident-compatible** patch coordinates and QC visualizations.
-
-### Run
+If you want interactive ROI selection, use:
 
     python wsi_ink_removal_grid_tool.py
 
-After launching, choose one of the modes:
-- **[1] Batch Processing**: process all WSI files in a directory (recommended)
-- **[2] Single File Processing**: process one WSI file
-- **[3] View Results**: browse and open saved QC images, extract coordinates
-- **[4] Exit**
+You can draw:
+- **GREEN inclusion polygons**: regions to sample patches
+- **BLUE exclusion polygons**: regions to remove (artifacts, pen marks, etc.)
 
-### Interactive Controls (OpenCV window)
-
-- **Left click**: add a vertex to the current polygon
-- **Right click**: close and finalize the polygon (requires ≥ 3 points)
-- **`g`**: switch to **GREEN** mode (Inclusion)
-- **`b`**: switch to **BLUE** mode (Exclusion)
-- **`SPACE`**: generate / regenerate the grid (requires at least one completed GREEN polygon)
-- **`z`**: undo last point (current mode)
-- **`r`**: reset the current (in-progress) polygon
-- **`c`**: clear all polygons and grids
-- **`q`**: save results and move to the next file (batch mode)
-- **`s`**: skip this file (do not save)
-- **`ESC`**: exit the entire program
+The tool exports Trident-compatible coordinate `.h5` and QC images.
 
 ---
 
-## Step 3: Feature Extraction (UNI via CLAM `extract_features_fp.py`)
+### Step 3: Patch Feature Extraction (UNI / CONCH via CLAM)
 
-This step extracts **patch-level deep features** using the **MahmoodLab UNI** encoder, through CLAM’s feature extraction script `extract_features_fp.py`.
+We use CLAM’s `extract_features_fp.py` to extract patch-level features from coordinate `.h5`.
 
 References:
 - UNI repo: https://github.com/mahmoodlab/UNI
 - UNI weights (HF): https://huggingface.co/MahmoodLab/UNI
+- CONCH weights (HF): https://huggingface.co/MahmoodLab/CONCH
 
----
+#### 3.1 Prepare model weights
 
-### 3.1 Download UNI Weights (Required)
-
-`extract_features_fp.py` uses `--model_name uni_v1`.  
-You must download the UNI checkpoint (`pytorch_model.bin`) from Hugging Face and set:
+If using UNI / CONCH, download `pytorch_model.bin` and set env vars:
 
     export UNI_CKPT_PATH=checkpoints/uni/pytorch_model.bin
+    export CONCH_CKPT_PATH=checkpoints/conch/pytorch_model.bin
 
----
+#### 3.2 Run extraction (UNI example)
 
-### 3.2 Run Feature Extraction (UNI)
+Important path rule (per code):
+- `extract_features_fp.py` looks for patch H5 at:
 
-Important: the script constructs the patch H5 path as:
+  `<data_h5_dir>/patches/<SLIDE_ID>.h5`
 
-    <data_h5_dir>/patches/<SLIDE_ID>.h5
-
-So `--data_h5_dir` should be the **same `--save_dir` used in Step 1** (the parent folder that contains the `patches/` subfolder), not the `patches/` subfolder itself.
+So `--data_h5_dir` should be the *parent directory created in Step 1* (e.g. `data/patches/`), not `data/patches/patches/`.
 
 Example:
 
     python extract_features_fp.py \
-        --data_h5_dir "patches/" \
-        --data_slide_dir "raw_slides/" \
+        --data_h5_dir "data/patches/" \
+        --data_slide_dir "data/raw_slides/" \
         --csv_path "slide_list.csv" \
-        --feat_dir "features/" \
+        --feat_dir "data/features/" \
         --batch_size 256 \
         --slide_ext .svs \
         --model_name "uni_v1" \
         --target_patch_size 224
 
-What it produces under `--feat_dir` (created automatically):
+Outputs:
 
-    features/
-      ├── h5_files/
-      │   └── <SLIDE_ID>.h5        # datasets: 'features', 'coords'
-      └── pt_files/
-          └── <SLIDE_ID>.pt        # torch tensor of features only
-
-Auto-skip behavior:
-- By default, if `features/pt_files/<SLIDE_ID>.pt` already exists, that slide is skipped.
-- To recompute everything, add:
-
-      --no_auto_skip
+    data/features/
+      ├── h5_files/<SLIDE_ID>.h5     # datasets: features, coords
+      └── pt_files/<SLIDE_ID>.pt     # tensor of features only
 
 ---
 
-### 3.3 UNI Output + Model Details
+## 🧾 Survival Training Data Format (CSV)
 
-- **Encoder**: `uni_v1` (loaded by `get_encoder()`)
-- **Target patch size**: `--target_patch_size` (default `224`)
-- **Feature dimension**: **1024-d**
-- Saved feature file contents:
-  - `h5_files/<SLIDE_ID>.h5` contains:
-    - `features`: shape `(N, 1024)`
-    - `coords`: shape `(N, 2)` (int32), matching the patch coordinates
+Training uses patient-level CSV files.  
+`SwinPrognosisDataset` expects the following columns:
 
-### 3.4 GPU / Batch Size Notes
+- `case_id`
+- `gender` (string: `"male"` / `"female"`)
+- `age_at_index` (numeric)
+- `label` (discrete interval label used by survival loss; integer-like)
+- `survival_months` (float)
+- `censor` (0 = event, 1 = censored)
+- `slide_id` (**python list string**), e.g.:
 
-UNI (ViT-L) is GPU-memory intensive. If you encounter CUDA OOM, reduce `--batch_size` (e.g., 128 / 64 / 32).
+  `["TCGA-XXX.pt", "TCGA-YYY.pt"]`
+
+Implementation note:
+- `slide_id` is parsed using `ast.literal_eval()`, so it must be a valid python list literal.
+
+---
+
+## 🧠 Model & Loss (Implementation)
+
+### Dataset
+File: `dataset_position.py`
+
+Modes:
+- `load_mode="pt"`: loads `torch.load(<pt_dir>/<slide_id>)` and concatenates slides per patient.
+- `load_mode="h5"`: loads `<h5_dir>/<slide_id>.h5` and reads:
+  - `features`
+  - `coords`
+
+### Collate (padding + attention mask)
+File: `model_utils.py`
+
+`custom_collate_fn`:
+- pads per-patient patch features to batch max length
+- returns `mask` of shape `(B, max_patches)` with `1` valid / `0` padded
+
+### Transformer with context (age, gender)
+File: `transformer_context.py`
+
+- patch feature projection + positional embedding
+- transformer blocks with attention masking
+- pooling: `cls` or `mean`
+- concatenates `(age, gender)` before final MLP head
+
+### Survival loss
+File: `loss_func.py`
+
+`CombinedSurvLoss`:
+- discrete-time hazard NLL loss
+- pairwise ranking loss
+- combined objective: `loss_nll + lambda_rank * loss_rank`
+
+---
+
+## 🏋️ Training & Evaluation
+
+Main training code:
+- `train_fold.py` (Optuna CV driver)
+- `train_utils_new.py` (training loop, evaluation, checkpointing)
+
+Typical workflow:
+- Split train/val/test (and load an external test set)
+- Run 10-fold CV for Optuna trial evaluation
+- Report C-index for val / test / external
+
+### Run (cross-validation + Optuna)
+
+Example:
+
+    python train_fold.py \
+        --data_dir "/path/to/pt_files_dir" \
+        --train_csv "/path/to/train.csv" \
+        --external_csv "/path/to/external.csv" \
+        --external_data_dir "/path/to/external_pt_dir" \
+        --save_dir "/path/to/save_outputs" \
+        --mode cross_validation \
+        --max_epochs 100 \
+        --seed 42
+
+Outputs are saved under `--save_dir` (trial/fold subfolders), including:
+- best checkpoints: `best_model.pth`
+- training logs + metrics CSV
+- test & external predictions CSV
+
+---
+
+## ⚠️ Important Implementation Note (Age/Gender Order)
+
+In `transformer_context.py`, the forward signature is:
+
+    forward(self, x, age, gender, mask=None)
+
+Make sure training calls the model in the same order:
+
+    outputs = model(feature, age, gender, mask)
+
+If your training script currently calls `(feature, gender, age, mask)`, age and gender will be swapped.
+
+---
+
+## 📓 Notebook Demo
+
+We provide an example notebook:
+
+- `examples/demo_pt_loading_and_forward.ipynb`
+
+It demonstrates:
+- creating a minimal CSV
+- loading `.pt` patch features
+- DataLoader + `custom_collate_fn`
+- running a forward pass and computing `CombinedSurvLoss`
+
+---
+
