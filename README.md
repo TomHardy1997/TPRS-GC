@@ -32,7 +32,6 @@ pip install -r requirements.txt
 
 ### Step 1: WSI Preprocessing
 
-### Step 1: WSI Preprocessing
 
 For WSI segmentation and patching, we employed the preprocessing pipeline from the [CLAM repository](https://github.com/mahmoodlab/CLAM).
 
