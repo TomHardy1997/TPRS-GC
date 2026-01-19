@@ -17,10 +17,29 @@ TPRS is a comprehensive pathological image analysis pipeline that combines:
 
 ### Installation
 
-**Step 1: Clone repository**
-git clone https://github.com/TPRS-GC/TPRS-GC.git
-cd TPRS-GC
+### Step 1: Clone repository
 
+    git clone https://github.com/TPRS-GC/TPRS-GC.git
+    cd TPRS-GC
+
+### Step 2: Create & activate a Python environment (recommended)
+
+Conda:
+
+    conda create -n tprs-gc python=3.9 -y
+    conda activate tprs-gc
+
+or venv:
+
+    python -m venv .venv
+    # Linux / macOS
+    source .venv/bin/activate
+    # Windows (PowerShell)
+    .\.venv\Scripts\Activate.ps1
+
+### Step 3: Install dependencies
+
+    pip install -r requirements.txt
 
 ## 📊 Data Preprocessing Pipeline
 
