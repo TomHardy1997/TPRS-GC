@@ -24,27 +24,43 @@ cd TPRS-GC
 
 ## 📊 Data Preprocessing Pipeline
 
-### Step 1: WSI Preprocessing
+## Step 1: WSI Preprocessing (Segmentation + Patching)
 
+We use the preprocessing pipeline from the CLAM repository for **tissue segmentation**, **patch coordinate generation**, and optional **stitching visualization**.
 
-For WSI segmentation and patching, we employed the preprocessing pipeline from the [CLAM repository](https://github.com/mahmoodlab/CLAM).
+This step is implemented by `create_patches_fp.py` (see source code). It will create three subfolders under `--save_dir`:
+- `patches/`  → patch coordinate `.h5` files (one per slide)
+- `masks/`    → tissue segmentation mask previews (`.jpg`)
+- `stitches/` → stitched patch-grid previews (`.jpg`, if enabled)
 
-To reproduce our patching step, use the `create_patches_fp.py` script with the following arguments:
+### Run
 
-```bash
-python create_patches_fp.py \
-    --source "raw_slides/" \
-    --save_dir "patches/" \
-    --patch_size 256 \
-    --step_size 256 \
-    --seg \
-    --patch \
-    --stitch
-```
+Example (seg + patch + stitch):
 
+    python create_patches_fp.py \
+        --source "raw_slides/" \
+        --save_dir "patches/" \
+        --patch_size 256 \
+        --step_size 256 \
+        --seg \
+        --patch \
+        --stitch
 
+### Notes (based on the script behavior)
+- The script writes/updates:
 
-### Step 2: Grid Selection & Patch Coordinate Export (Interactive)
+      patches/process_list_autogen.csv
+
+  during processing (used for tracking slide-level parameters/status).
+- Auto-skip is enabled by default: if `patches/patches/<SLIDE_ID>.h5` already exists, that slide is skipped.
+  To disable skipping, use:
+
+      --no_auto_skip
+- `--patch_level` defaults to `0` (level-0). You can change it if needed.
+
+---
+
+## Step 2: Grid Selection & Patch Coordinate Export (Interactive)
 
 This step provides an interactive workflow to select regions on a WSI thumbnail and generate a **grid of patch coordinates** on the **level-0 coordinate system**. Draw **GREEN inclusion polygons** to indicate where to sample patches, and optionally draw **BLUE exclusion polygons** to remove unwanted areas (e.g., artifacts) from the sampled grid. The tool exports **Trident-compatible** patch coordinates and QC visualizations.
 
@@ -57,33 +73,6 @@ After launching, choose one of the modes:
 - **[2] Single File Processing**: process one WSI file
 - **[3] View Results**: browse and open saved QC images, extract coordinates
 - **[4] Exit**
-
----
-
-### Key Features
-
-- **Interactive polygon annotation**
-  - **GREEN (Include)** polygons define regions where patches will be generated
-  - **BLUE (Exclude)** polygons carve out areas to be excluded from the GREEN regions
-
-- **Grid-based patch coordinate generation (level-0)**
-  - Iterates a regular grid at `rect_size` stride on the original slide
-  - A patch is kept if its *center point* falls inside GREEN and not inside BLUE
-
-- **Automatic patch/grid sizing by objective power**
-  - If slide is **40x** → `rect_size = 1024`
-  - If slide is **20x** → `rect_size = 512`
-
-- **Batch mode with progress tracking**
-  - Writes `processing_progress.json` in the output directory to track `completed` and `skipped`
-
-- **QC outputs + exports**
-  - Thumbnail image
-  - Annotated preview image (polygons + generated grid)
-  - Trident-compatible `.h5` coordinates + metadata JSON
-  - Also saves a legacy coordinate file for convenience
-
----
 
 ### Interactive Controls (OpenCV window)
 
@@ -101,114 +90,71 @@ After launching, choose one of the modes:
 
 ---
 
-### Output Structure
+## Step 3: Feature Extraction (UNI via CLAM `extract_features_fp.py`)
 
-Each slide creates its own subfolder under the chosen output directory:
+This step extracts **patch-level deep features** using the **MahmoodLab UNI** encoder, through CLAM’s feature extraction script `extract_features_fp.py`.
 
-    output_dir/
-      ├── processing_progress.json
-      ├── SLIDE_NAME/
-      │   ├── SLIDE_NAME_thumbnail.png
-      │   ├── SLIDE_NAME_annotated.png
-      │   ├── SLIDE_NAME_patches.h5
-      │   ├── SLIDE_NAME_coordinates_legacy.h5
-      │   └── SLIDE_NAME_metadata.json
+References:
+- UNI repo: https://github.com/mahmoodlab/UNI
+- UNI weights (HF): https://huggingface.co/MahmoodLab/UNI
 
 ---
 
-### Trident-Compatible H5 Format
+### 3.1 Download UNI Weights (Required)
 
-- File: `*_patches.h5`
-- Dataset: `coords` with shape `(N, 2)` and dtype `int64`
-- Each row is the **top-left** patch coordinate on **level-0**: `[[x, y], ...]`
-
-Key attributes written to `coords.attrs` include:
-- `patch_size`, `patch_size_level0`
-- `target_magnification`, `level0_magnification`
-- `level0_width`, `level0_height`
-- `overlap` (currently `0`)
-- `name`, `savetodir`
-- `total_grids`, `green_polygons`, `blue_polygons`
-
-Magnification logic (as implemented):
-- **40x slides**: cut `1024` at level-0 (`patch_size_level0=1024`) and set `target_magnification=20`, `patch_size=512`
-- **20x slides**: cut `512` at level-0 (`patch_size_level0=512`) and set `target_magnification=20`, `patch_size=512`
-
-### Step 3: Feature Extraction (UNI / CONCH Encoders via CLAM)
-
-This step extracts **patch-level deep features** from the patch coordinates produced in Step 2.  
-We use the **CLAM** feature extraction script (`extract_features_fp.py`) but swap the default ResNet50 encoder with **MahmoodLab UNI** (or optionally **CONCH**).
-
-> Reference encoders:  
-> - UNI repo: https://github.com/mahmoodlab/UNI  
-> - UNI weights (HF): https://huggingface.co/MahmoodLab/UNI  
-> - CONCH weights (HF): https://huggingface.co/MahmoodLab/CONCH  
-
----
-
-### 3.1 Prepare Model Weights (Required for UNI/CONCH)
-
-`extract_features_fp.py` supports the following encoders:
-
-- `resnet50_trunc` (default)
-- `uni_v1`
-- `conch_v1`
-
-If using **UNI** or **CONCH**, first request/download the Hugging Face checkpoint (`pytorch_model.bin`), then set environment variables to point to the local file path.
-
-Example directory layout:
-
-    checkpoints/
-      ├── uni/
-      │   └── pytorch_model.bin
-      └── conch/
-          └── pytorch_model.bin
-
-Set environment variables:
+`extract_features_fp.py` uses `--model_name uni_v1`.  
+You must download the UNI checkpoint (`pytorch_model.bin`) from Hugging Face and set:
 
     export UNI_CKPT_PATH=checkpoints/uni/pytorch_model.bin
-    export CONCH_CKPT_PATH=checkpoints/conch/pytorch_model.bin
 
 ---
 
 ### 3.2 Run Feature Extraction (UNI)
 
-Example command (UNI encoder):
+Important: the script constructs the patch H5 path as:
+
+    <data_h5_dir>/patches/<SLIDE_ID>.h5
+
+So `--data_h5_dir` should be the **same `--save_dir` used in Step 1** (the parent folder that contains the `patches/` subfolder), not the `patches/` subfolder itself.
+
+Example:
 
     python extract_features_fp.py \
         --data_h5_dir "patches/" \
         --data_slide_dir "raw_slides/" \
         --csv_path "slide_list.csv" \
         --feat_dir "features/" \
-        --batch_size 512 \
+        --batch_size 256 \
         --slide_ext .svs \
-        --model_name "uni_v1"
+        --model_name "uni_v1" \
+        --target_patch_size 224
 
-Notes:
-- `--data_h5_dir` should contain the patch coordinate `.h5` files from Step 2.
-- `--data_slide_dir` is the folder containing the original WSI files.
-- `--csv_path` is a CSV listing slide filenames/IDs (as expected by the CLAM script).
-- `--feat_dir` is the output directory for extracted features.
+What it produces under `--feat_dir` (created automatically):
 
----
+    features/
+      ├── h5_files/
+      │   └── <SLIDE_ID>.h5        # datasets: 'features', 'coords'
+      └── pt_files/
+          └── <SLIDE_ID>.pt        # torch tensor of features only
 
-### 3.3 Model Configuration (UNI v1)
+Auto-skip behavior:
+- By default, if `features/pt_files/<SLIDE_ID>.pt` already exists, that slide is skipped.
+- To recompute everything, add:
 
-- **Architecture**: Vision Transformer (ViT-Large)
-- **Input**: 224×224 patch crops (script handles preprocessing)
-- **Feature Dimension**: 1024
-- **Pre-training**: 100M+ histopathology images
-- **Compute**: Heavier than ResNet50; typically requires smaller batch sizes if GPU memory is limited
-
-Optional alternative:
-- **CONCH (`conch_v1`)** outputs **512-dim** features and may have different memory/runtime characteristics.
+      --no_auto_skip
 
 ---
 
-### 3.4 Practical Tips (GPU / Batch Size)
+### 3.3 UNI Output + Model Details
 
-UNI (ViT-L) is significantly more GPU-memory intensive than the default `resnet50_trunc`.
-If you hit CUDA OOM:
-- reduce `--batch_size` (e.g., 256 / 128 / 64)
-- consider extracting features on fewer slides in parallel
-- ensure your patch count per slide is reasonable (Step 2 selection impacts runtime)
+- **Encoder**: `uni_v1` (loaded by `get_encoder()`)
+- **Target patch size**: `--target_patch_size` (default `224`)
+- **Feature dimension**: **1024-d**
+- Saved feature file contents:
+  - `h5_files/<SLIDE_ID>.h5` contains:
+    - `features`: shape `(N, 1024)`
+    - `coords`: shape `(N, 2)` (int32), matching the patch coordinates
+
+### 3.4 GPU / Batch Size Notes
+
+UNI (ViT-L) is GPU-memory intensive. If you encounter CUDA OOM, reduce `--batch_size` (e.g., 128 / 64 / 32).
