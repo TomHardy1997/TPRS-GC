@@ -1,4 +1,4 @@
-# TPRS: Transformer-based Prognostic Risk Stratification for Gastric Cancer
+ # TPRS: Transformer-based Prognostic Risk Stratification for Gastric Cancer
 
 A streamlined deep learning framework for survival prediction from whole-slide images using transformer architecture.
 
