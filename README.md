@@ -117,15 +117,31 @@ Notes:
 
 ### Step 2 (Optional): Interactive Grid Selection & Coordinate Export
 
-If you want interactive ROI selection, use:
+This step provides an interactive workflow to select regions on a WSI thumbnail and generate a **grid of patch coordinates** on the **level-0 coordinate system**. Draw **GREEN inclusion polygons** to indicate where to sample patches, and optionally draw **BLUE exclusion polygons** to remove unwanted areas (e.g., artifacts) from the sampled grid. The tool exports **Trident-compatible** patch coordinates and QC visualizations.
+
+### Run
 
     python wsi_ink_removal_grid_tool.py
 
-You can draw:
-- **GREEN inclusion polygons**: regions to sample patches
-- **BLUE exclusion polygons**: regions to remove (artifacts, pen marks, etc.)
+After launching, choose one of the modes:
+- **[1] Batch Processing**: process all WSI files in a directory (recommended)
+- **[2] Single File Processing**: process one WSI file
+- **[3] View Results**: browse and open saved QC images, extract coordinates
+- **[4] Exit**
 
-The tool exports Trident-compatible coordinate `.h5` and QC images.
+### Interactive Controls (OpenCV window)
+
+- **Left click**: add a vertex to the current polygon
+- **Right click**: close and finalize the polygon (requires ≥ 3 points)
+- **`g`**: switch to **GREEN** mode (Inclusion)
+- **`b`**: switch to **BLUE** mode (Exclusion)
+- **`SPACE`**: generate / regenerate the grid (requires at least one completed GREEN polygon)
+- **`z`**: undo last point (current mode)
+- **`r`**: reset the current (in-progress) polygon
+- **`c`**: clear all polygons and grids
+- **`q`**: save results and move to the next file (batch mode)
+- **`s`**: skip this file (do not save)
+- **`ESC`**: exit the entire program
 
 ---
 
