@@ -38,6 +38,7 @@ To reproduce our patching step, use the `create_patches_fp.py` script with the f
 ```bash
 python create_patches_fp.py --source "raw_slides/" --save_dir "patches/" --patch_size 256 --step_size 256 --seg --patch --stitch
 
+
 ### Step 2: Ink Removal (Optional - for marker-annotated slides)
 **Semi-automated ink removal using interactive tool:**
 python wsi_ink_removal_grid_tool.py \
