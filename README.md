@@ -44,8 +44,7 @@ python create_patches_fp.py \
 
 
 
-### Step 2: Ink Removal (Optional - for marker-annotated slides)
-## Step 2: Grid Selection & Patch Coordinate Export (Interactive)
+### Step 2: Grid Selection & Patch Coordinate Export (Interactive)
 
 This step provides an interactive workflow to select regions on a WSI thumbnail and generate a **grid of patch coordinates** on the **level-0 coordinate system**. Draw **GREEN inclusion polygons** to indicate where to sample patches, and optionally draw **BLUE exclusion polygons** to remove unwanted areas (e.g., artifacts) from the sampled grid. The tool exports **Trident-compatible** patch coordinates and QC visualizations.
 
@@ -135,20 +134,81 @@ Magnification logic (as implemented):
 - **40x slides**: cut `1024` at level-0 (`patch_size_level0=1024`) and set `target_magnification=20`, `patch_size=512`
 - **20x slides**: cut `512` at level-0 (`patch_size_level0=512`) and set `target_magnification=20`, `patch_size=512`
 
-### Step 3: Feature Extraction (UNI Network)
-**Extract features using UNI foundation model:**
-python extract_features_fp.py \
-    --data_h5_dir "patches/" \
-    --data_slide_dir "raw_slides/" \
-    --csv_path "slide_list.csv" \
-    --feat_dir "features/" \
-    --batch_size 512 \
-    --slide_ext .svs \
-    --model_name "UNI"
+### Step 3: Feature Extraction (UNI / CONCH Encoders via CLAM)
 
-**UNI Model Configuration:**
+This step extracts **patch-level deep features** from the patch coordinates produced in Step 2.  
+We use the **CLAM** feature extraction script (`extract_features_fp.py`) but swap the default ResNet50 encoder with **MahmoodLab UNI** (or optionally **CONCH**).
+
+> Reference encoders:  
+> - UNI repo: https://github.com/mahmoodlab/UNI  
+> - UNI weights (HF): https://huggingface.co/MahmoodLab/UNI  
+> - CONCH weights (HF): https://huggingface.co/MahmoodLab/CONCH  
+
+---
+
+### 3.1 Prepare Model Weights (Required for UNI/CONCH)
+
+`extract_features_fp.py` supports the following encoders:
+
+- `resnet50_trunc` (default)
+- `uni_v1`
+- `conch_v1`
+
+If using **UNI** or **CONCH**, first request/download the Hugging Face checkpoint (`pytorch_model.bin`), then set environment variables to point to the local file path.
+
+Example directory layout:
+
+    checkpoints/
+      ├── uni/
+      │   └── pytorch_model.bin
+      └── conch/
+          └── pytorch_model.bin
+
+Set environment variables:
+
+    export UNI_CKPT_PATH=checkpoints/uni/pytorch_model.bin
+    export CONCH_CKPT_PATH=checkpoints/conch/pytorch_model.bin
+
+---
+
+### 3.2 Run Feature Extraction (UNI)
+
+Example command (UNI encoder):
+
+    python extract_features_fp.py \
+        --data_h5_dir "patches/" \
+        --data_slide_dir "raw_slides/" \
+        --csv_path "slide_list.csv" \
+        --feat_dir "features/" \
+        --batch_size 512 \
+        --slide_ext .svs \
+        --model_name "uni_v1"
+
+Notes:
+- `--data_h5_dir` should contain the patch coordinate `.h5` files from Step 2.
+- `--data_slide_dir` is the folder containing the original WSI files.
+- `--csv_path` is a CSV listing slide filenames/IDs (as expected by the CLAM script).
+- `--feat_dir` is the output directory for extracted features.
+
+---
+
+### 3.3 Model Configuration (UNI v1)
+
 - **Architecture**: Vision Transformer (ViT-Large)
-- **Input Size**: 224×224 patches
+- **Input**: 224×224 patch crops (script handles preprocessing)
 - **Feature Dimension**: 1024
 - **Pre-training**: 100M+ histopathology images
-- **Performance**: State-of-the-art on multiple histopathology tasks
+- **Compute**: Heavier than ResNet50; typically requires smaller batch sizes if GPU memory is limited
+
+Optional alternative:
+- **CONCH (`conch_v1`)** outputs **512-dim** features and may have different memory/runtime characteristics.
+
+---
+
+### 3.4 Practical Tips (GPU / Batch Size)
+
+UNI (ViT-L) is significantly more GPU-memory intensive than the default `resnet50_trunc`.
+If you hit CUDA OOM:
+- reduce `--batch_size` (e.g., 256 / 128 / 64)
+- consider extracting features on fewer slides in parallel
+- ensure your patch count per slide is reasonable (Step 2 selection impacts runtime)
